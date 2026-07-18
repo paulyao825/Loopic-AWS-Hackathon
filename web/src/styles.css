@@ -1214,6 +1214,46 @@ h3 {
   text-decoration: none;
 }
 
+.result-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.result-edit {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border-top: 1px solid var(--rule-soft);
+  background: var(--paper);
+}
+
+.result-adjustment {
+  display: grid;
+  gap: 4px;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.result-adjustment span {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.result-adjustment strong {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.result-adjustment input {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
 .save-result:hover {
   border-color: var(--accent);
   background: var(--accent);
