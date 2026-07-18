@@ -258,6 +258,19 @@ h3 {
   font-size: 76px;
 }
 
+.hero-slogan {
+  display: inline-block;
+  margin: 0 0 18px;
+  padding: 8px 12px 7px;
+  border-top: 2px solid var(--ink);
+  border-bottom: 2px solid var(--ink);
+  color: var(--accent-strong);
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
 .hero-dek {
   max-width: 650px;
   margin-bottom: 28px;

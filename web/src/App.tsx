@@ -210,16 +210,17 @@ function LandingPage({ busy, onRunFile }: { busy: boolean; onRunFile: (file: Fil
       <div className="edition-line">
         <span>Prototype edition · 2026</span>
         <span>Video-to-photo intelligence</span>
-        <span>Every frame deserves a second look</span>
+        <span>Don&apos;t miss any frames</span>
       </div>
 
       <section className="hero">
         <div className="hero-copy fade-in">
           <span className="kicker">The visual moment report</span>
           <h1>Your video is full of photographs waiting to be found.</h1>
+          <p className="hero-slogan">Don&apos;t miss any frames.</p>
           <p className="hero-dek">
-            Loopic extracts the strongest moments, critiques its own choices, improves the edits, and returns a
-            finished set for the places you publish.
+            We don&apos;t like AI-generated pics. We use AI to attract real-world clip photos: the actual moments
+            already inside your videos, selected and refined for the places you publish.
           </p>
           <div className="hero-actions">
             <a className="btn primary" href="#upload">Start with a video</a>

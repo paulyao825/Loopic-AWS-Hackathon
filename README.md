@@ -4,6 +4,9 @@ Loopic finds the best photos hidden inside videos. Upload a video, and the
 agent extracts candidate frames, selects the strongest and most varied moments,
 then improves each one through a critique-and-refine loop.
 
+**Don't miss any frames.** Loopic does not create fake AI pictures. It uses AI to
+attract real-world clip photos: the actual moments already inside your videos.
+
 The current prototype focuses on discovering and improving strong photo moments:
 
 - frame extraction from raw video
