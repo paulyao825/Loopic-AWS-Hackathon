@@ -33,7 +33,7 @@ export function UploadPanel({
     <section className="card upload-panel fade-in" id="upload">
       <header className="upload-head">
         <span className="eyebrow">Start a run</span>
-        <h2>Upload your video</h2>
+        <h2 id="run-section-title">Upload your video</h2>
         <p className="muted">Precious Frame works best with short reels, clips, and highlight videos.</p>
       </header>
 

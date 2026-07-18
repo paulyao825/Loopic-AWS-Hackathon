@@ -214,6 +214,9 @@ function LandingPage({ busy, onRunFile }: { busy: boolean; onRunFile: (file: Fil
             <div><strong>03</strong><span>Refine</span></div>
           </div>
         </div>
+      </section>
+
+      <section className="run-section" aria-label="Start a run">
         <UploadPanel busy={busy} onRunFile={onRunFile} />
       </section>
 

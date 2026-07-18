@@ -229,8 +229,7 @@ h3 {
 
 .hero {
   display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(360px, 0.75fr);
-  gap: 46px;
+  grid-template-columns: 1fr;
   align-items: center;
   min-height: 620px;
   padding: 64px 0 56px;
@@ -238,7 +237,7 @@ h3 {
 }
 
 .hero-copy {
-  max-width: 720px;
+  max-width: 860px;
 }
 
 .kicker,
@@ -325,6 +324,32 @@ h3 {
   padding: 28px;
   border-color: var(--rule);
   box-shadow: 10px 10px 0 var(--paper-muted);
+}
+
+.run-section {
+  padding: 56px 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.run-section .upload-panel {
+  display: grid;
+  grid-template-columns: minmax(240px, 0.7fr) minmax(0, 1.3fr);
+  column-gap: 32px;
+  align-items: start;
+}
+
+.run-section .upload-head {
+  grid-column: 1;
+}
+
+.run-section .dropzone,
+.run-section .controls,
+.run-section .actions {
+  grid-column: 2;
+}
+
+.run-section .controls {
+  margin-bottom: 0;
 }
 
 .upload-head {
@@ -1311,6 +1336,10 @@ h3 {
 
   .upload-panel {
     max-width: 680px;
+  }
+
+  .run-section .upload-panel {
+    display: block;
   }
 
   .split-heading,
