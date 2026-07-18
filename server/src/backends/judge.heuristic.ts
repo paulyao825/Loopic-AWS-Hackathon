@@ -6,9 +6,8 @@ import { analyzeImage, sharpnessScore } from "../media/analysis.js";
 
 /**
  * Real vision judge that needs no API key: scores the actual pixels of
- * the edited image on concrete axes. An LLM judge (OpenAI / Gemini /
- * Claude / OpenRouter) can replace it behind the same interface — the
- * hint vocabulary is identical either way.
+ * the edited image on concrete axes. The Qwen-VL judge replaces it when
+ * DASHSCOPE_API_KEY is configured. The hint vocabulary is identical either way.
  */
 export class HeuristicVisionJudge implements VisionJudge {
   constructor(private readonly resolvePath: (uri: string) => string) {}

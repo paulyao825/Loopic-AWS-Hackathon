@@ -5,12 +5,10 @@ import { AxisBars, ScorePill, Sparkline, Spinner } from "./bits";
 export function Loop2Card({
   frame,
   loop,
-  backend,
   bar = 7.5,
 }: {
   frame: FrameInfo | undefined;
   loop: Loop2State;
-  backend: string;
   bar?: number;
 }) {
   const rounds = loop.rounds;
@@ -37,7 +35,6 @@ export function Loop2Card({
       <header className="card-head">
         <div>
           <span className="mono muted">{loop.frameId}</span>
-          <span className={`backend-chip ${backend}`}>{backend}</span>
         </div>
         <div className="head-right">
           <Sparkline scores={rounds.map((r) => r.info.score)} bar={bar} />

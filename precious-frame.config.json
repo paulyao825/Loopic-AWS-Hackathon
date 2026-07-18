@@ -1,27 +1,14 @@
 {
-  "$comment": "Precious Frame runtime config \u2014 reloaded on every run, no restart needed.",
+  "$comment": "Precious Frame runtime config - reloaded on every run.",
   "judge": {
-    "$comment": "provider: heuristic | akashml | openai | gemini | anthropic | openrouter | bedrock. Put keys in .env. Missing keys or API errors fall back to local pixel scoring.",
-    "provider": "akashml",
-    "model": "Qwen/Qwen3.5-35B-A3B",
-    "apiKeyEnv": "",
-    "baseUrl": ""
-  },
-  "aws": {
-    "$comment": "region for Bedrock/S3. s3Bucket (optional): host intermediate images via presigned URLs for remote editors instead of free ephemeral hosts.",
-    "region": "us-east-1",
-    "s3Bucket": ""
+    "$comment": "qwen uses DASHSCOPE_API_KEY. Missing keys or API errors fall back to local pixel scoring.",
+    "provider": "qwen",
+    "model": "qwen3-vl-plus",
+    "baseUrl": "https://dashscope-us.aliyuncs.com/compatible-mode/v1"
   },
   "loop": {
-    "$comment": "bar: overall score (0.6*mean + 0.4*worst axis) needed to stop early.",
+    "$comment": "bar is the score needed to stop early.",
     "bar": 7.5,
     "maxRounds": 8
-  },
-  "zero": {
-    "$comment": "Zero.xyz \u2014 capability discovery is free and always on. Paid invocation needs `zero auth login` + funded wallet; set maxPayUsdc > 0 to allow spending.",
-    "enabled": true,
-    "maxPayUsdc": 0,
-    "flourishQuery": "image upscale enhance super-resolution photo",
-    "editQuery": "photo image editing crop resize exposure"
   }
 }

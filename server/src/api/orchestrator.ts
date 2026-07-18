@@ -1,36 +1,32 @@
-import path from "node:path";
 import { randomUUID } from "node:crypto";
-import type { RunEvent, FrameInfo, RoundInfo } from "./events.js";
-import type { EditorBackend } from "../config.js";
-import { loadAppConfig, type AppConfig } from "../appConfig.js";
-import { runLoop, type LoopRound } from "../core/loop.js";
-import { extractFrames } from "../media/ffmpeg.js";
-import { RealFrameScorer } from "../backends/frameScorer.real.js";
-import { LlmFrameScorer } from "../backends/frameScorer.llm.js";
-import type { FrameScorer } from "../backends/frameScorer.js";
-import { SharpLocalEditor, ZeroEditor } from "../backends/editor.sharp.js";
+import path from "node:path";
+import type { AppConfig } from "../appConfig.js";
+import { loadAppConfig } from "../appConfig.js";
 import type { Editor } from "../backends/editor.js";
-import { ResilientJudge, type VisionJudge } from "../backends/judge.js";
+import { SharpLocalEditor } from "../backends/editor.sharp.js";
+import type { FrameScorer } from "../backends/frameScorer.js";
+import { LlmFrameScorer } from "../backends/frameScorer.llm.js";
+import { RealFrameScorer } from "../backends/frameScorer.real.js";
+import type { VisionJudge } from "../backends/judge.js";
+import { ResilientJudge } from "../backends/judge.js";
 import { HeuristicVisionJudge } from "../backends/judge.heuristic.js";
 import { LlmVisionJudge } from "../backends/judge.llm.js";
-import { BedrockVisionJudge } from "../backends/judge.bedrock.js";
-import { ZeroClient, type ZeroDiscovery } from "../backends/zero.js";
-import { InstrumentedComputeRunner } from "../backends/compute.js";
-import { S3Publisher } from "../backends/aws.js";
-import { makeFrameSelectionLoop, initialSelectionState } from "../loops/frameSelection.js";
-import { makeEditRefinementLoop, initialRefineState } from "../loops/editRefinement.js";
+import type { LoopRound } from "../core/loop.js";
+import { runLoop } from "../core/loop.js";
 import type { EditedImage, Frame } from "../domain/types.js";
+import { initialRefineState, makeEditRefinementLoop } from "../loops/editRefinement.js";
+import { initialSelectionState, makeFrameSelectionLoop } from "../loops/frameSelection.js";
+import { extractFrames } from "../media/ffmpeg.js";
+import type { FrameInfo, RoundInfo, RunEvent } from "./events.js";
 
 export interface RunRequest {
   videoPath: string;
   n: number;
-  editorBackend: EditorBackend;
-  flourish: boolean;
 }
 
 interface RunRecord {
   events: RunEvent[];
-  listeners: Set<(e: RunEvent) => void>;
+  listeners: Set<(event: RunEvent) => void>;
   done: boolean;
 }
 
@@ -47,10 +43,10 @@ export class RunManager {
     return this.runs.get(runId);
   }
 
-  subscribe(runId: string, listener: (e: RunEvent) => void): () => void {
+  subscribe(runId: string, listener: (event: RunEvent) => void): () => void {
     const run = this.runs.get(runId);
     if (!run) throw new Error(`unknown run ${runId}`);
-    for (const e of run.events) listener(e); // replay, then live
+    for (const event of run.events) listener(event);
     run.listeners.add(listener);
     return () => run.listeners.delete(listener);
   }
@@ -60,9 +56,9 @@ export class RunManager {
     const record: RunRecord = { events: [], listeners: new Set(), done: false };
     this.runs.set(runId, record);
 
-    const emit = (e: RunEvent) => {
-      record.events.push(e);
-      for (const l of record.listeners) l(e);
+    const emit = (event: RunEvent) => {
+      record.events.push(event);
+      for (const listener of record.listeners) listener(event);
     };
 
     this.execute(runId, req, emit)
@@ -74,108 +70,67 @@ export class RunManager {
     return runId;
   }
 
-  private async execute(runId: string, req: RunRequest, emit: (e: RunEvent) => void): Promise<void> {
+  private async execute(runId: string, req: RunRequest, emit: (event: RunEvent) => void): Promise<void> {
     const runDir = path.join(this.dataDir, "runs", runId);
-    const compute = new InstrumentedComputeRunner((task) => emit({ type: "compute:task", ...task })); // Akash-aware
-    const cfg: AppConfig = loadAppConfig(); // re-read per run: config edits apply live
-
+    const cfg = loadAppConfig();
+    const editor: Editor = new SharpLocalEditor(path.join(runDir, "edits"), this.urlFor);
     const judge = this.buildJudge(cfg, emit);
-    const zero = new ZeroClient(cfg.zero);
-    const s3 = cfg.aws.s3Bucket ? new S3Publisher(cfg.aws) : undefined;
-
-    const editsDir = path.join(runDir, "edits");
-    const editor: Editor =
-      req.editorBackend === "zero"
-        ? new ZeroEditor(editsDir, this.urlFor, zero, s3)
-        : new SharpLocalEditor(editsDir, this.urlFor);
+    const visionLabel = cfg.judge.provider === "qwen" ? `Qwen:${cfg.judge.model}` : "local pixel scoring";
 
     emit({
       type: "run:init",
       runId,
       n: req.n,
-      editorBackend: req.editorBackend,
-      flourish: req.flourish,
-      selector: cfg.judge.provider === "heuristic" ? "heuristic-pixels" : `${cfg.judge.provider}:${cfg.judge.model}`,
-      judge: cfg.judge.provider === "heuristic" ? "heuristic-pixels" : `${cfg.judge.provider}:${cfg.judge.model}`,
+      selector: visionLabel,
+      judge: visionLabel,
       judgeNote: cfg.judge.note,
       bar: cfg.loop.bar,
-      compute: compute.env.host,
-      computeNote: compute.env.detail,
-      awsNote:
-        cfg.judge.provider === "bedrock"
-          ? `Bedrock judge in ${cfg.aws.region}${cfg.aws.s3Bucket ? ` + S3 image hosting (${cfg.aws.s3Bucket})` : ""}`
-          : cfg.aws.s3Bucket
-            ? `S3 image hosting (${cfg.aws.s3Bucket}, ${cfg.aws.region})`
-            : undefined,
     });
 
-    // ── Zero.xyz discovery (live catalog search, concurrent with extract)
-    const flourishDiscovery: Promise<ZeroDiscovery | undefined> =
-      req.flourish && zero.available
-        ? zero
-            .discover(cfg.zero.flourishQuery)
-            .then((d) => {
-              emit({
-                type: "zero:discovery",
-                purpose: "flourish",
-                query: d.query,
-                capability: d.capability
-                  ? { name: d.capability.name, slug: d.capability.slug, pricing: d.capability.pricing, status: d.capability.status }
-                  : undefined,
-                invocable: d.invocable,
-                note: d.note,
-              });
-              return d;
-            })
-            .catch(() => undefined)
-        : Promise.resolve(undefined);
-
-    // ── Extract ─────────────────────────────────────────────────────
     emit({ type: "extract:start" });
     const extracted = await extractFrames(req.videoPath, path.join(runDir, "frames"));
-    const frames: Frame[] = extracted.map((f, i) => ({
-      id: `frame_${String(i + 1).padStart(3, "0")}`,
-      t: f.t,
-      uri: f.path,
+    const frames: Frame[] = extracted.map((frame, index) => ({
+      id: `frame_${String(index + 1).padStart(3, "0")}`,
+      t: frame.t,
+      uri: frame.path,
     }));
-    const frameInfos: FrameInfo[] = frames.map((f) => ({ id: f.id, t: f.t, url: this.urlFor(f.uri) }));
+    const frameInfos: FrameInfo[] = frames.map((frame) => ({ id: frame.id, t: frame.t, url: this.urlFor(frame.uri) }));
     emit({ type: "extract:done", frames: frameInfos });
 
-    // ── Loop 1: frame selection ─────────────────────────────────────
     const localScorer = new RealFrameScorer();
-    const scorer: FrameScorer = this.buildFrameScorer(cfg, localScorer, emit);
+    const scorer = this.buildFrameScorer(cfg, localScorer, emit);
     await scorer.prepare?.(frames);
-    const selection = await compute.run("frame-selection", () =>
-      runLoop(makeFrameSelectionLoop(frames, scorer, { bar: 8.2 }), initialSelectionState(req.n), {
-        onRound: (r) =>
-          emit({ type: "loop1:round", info: toRoundInfo(r), selectedIds: r.candidate.map((f) => f.id) }),
-      }),
+    const selection = await runLoop(
+      makeFrameSelectionLoop(frames, scorer, { bar: 8.2 }),
+      initialSelectionState(req.n),
+      {
+        onRound: (round) =>
+          emit({ type: "loop1:round", info: toRoundInfo(round), selectedIds: round.candidate.map((frame) => frame.id) }),
+      },
     );
     emit({
       type: "loop1:done",
-      selectedIds: selection.best.map((f) => f.id),
+      selectedIds: selection.best.map((frame) => frame.id),
       converged: selection.converged,
       bestScore: selection.bestScore,
     });
 
-    // ── Loop 2: edit refinement per pick ────────────────────────────
     const results: Array<{ frame: Frame; image: EditedImage; score: number }> = [];
     for (const frame of selection.best) {
       emit({ type: "loop2:start", frameId: frame.id });
-      const result = await compute.run(`edit-refine-${frame.id}`, () =>
-        runLoop(
-          makeEditRefinementLoop(frame, editor, judge, { bar: cfg.loop.bar, maxRounds: cfg.loop.maxRounds }),
-          initialRefineState(),
-          {
-          onRound: (r) =>
+      const result = await runLoop(
+        makeEditRefinementLoop(frame, editor, judge, { bar: cfg.loop.bar, maxRounds: cfg.loop.maxRounds }),
+        initialRefineState(),
+        {
+          onRound: (round) =>
             emit({
               type: "loop2:round",
               frameId: frame.id,
-              info: toRoundInfo(r),
-              imageUrl: r.candidate.uri,
-              recipe: r.candidate.recipe,
+              info: toRoundInfo(round),
+              imageUrl: round.candidate.uri,
+              recipe: round.candidate.recipe,
             }),
-        }),
+        },
       );
       emit({
         type: "loop2:done",
@@ -188,49 +143,26 @@ export class RunManager {
       results.push({ frame, image: result.best, score: result.bestScore });
     }
 
-    // ── Final flourish: Zero.xyz pro pass on the winner only ────────
     if (results.length === 0) throw new Error("no frames were selected for editing");
-    const winner = results.reduce((a, b) => (b.score > a.score ? b : a));
-    let flourishUrl: string | undefined;
-    if (req.flourish && results.length > 0) {
-      emit({ type: "flourish:start", frameId: winner.frame.id });
-      const discovery = await flourishDiscovery;
-      const zeroEditor = editor instanceof ZeroEditor ? editor : new ZeroEditor(editsDir, this.urlFor, zero, s3);
-      const enhanced = await zeroEditor.finalFlourish(winner.image, this.resolvePath(winner.image.uri), discovery);
-      flourishUrl = enhanced.image.uri;
-      emit({
-        type: "flourish:done",
-        frameId: winner.frame.id,
-        url: enhanced.image.uri,
-        via: enhanced.via,
-        note: enhanced.note,
-      });
-    }
-
+    const winner = results.reduce((best, result) => (result.score > best.score ? result : best));
     emit({
       type: "run:done",
-      results: results.map((r) => ({
-        frameId: r.frame.id,
-        score: r.score,
-        url: r.image.uri,
-        flourishUrl: r.frame.id === winner.frame.id ? flourishUrl : undefined,
-        backend: r.image.backend,
-        winner: r.frame.id === winner.frame.id,
+      results: results.map((result) => ({
+        frameId: result.frame.id,
+        score: result.score,
+        url: result.image.uri,
+        winner: result.frame.id === winner.frame.id,
       })),
     });
   }
 
-  private buildJudge(cfg: AppConfig, emit: (e: RunEvent) => void): VisionJudge {
-    const heuristic = new HeuristicVisionJudge(this.resolvePath);
-    if (cfg.judge.provider === "heuristic") return heuristic;
-    const primary: VisionJudge =
-      cfg.judge.provider === "bedrock"
-        ? new BedrockVisionJudge(this.resolvePath, cfg.aws.region, cfg.judge.model)
-        : new LlmVisionJudge(this.resolvePath, cfg.judge);
-    return new ResilientJudge(primary, heuristic, (err) =>
+  private buildJudge(cfg: AppConfig, emit: (event: RunEvent) => void): VisionJudge {
+    const local = new HeuristicVisionJudge(this.resolvePath);
+    if (cfg.judge.provider === "heuristic") return local;
+    return new ResilientJudge(new LlmVisionJudge(this.resolvePath, cfg.judge), local, (err) =>
       emit({
         type: "judge:fallback",
-        message: `${cfg.judge.provider} judge failed (${String(err).slice(0, 180)}) — continuing with pixel heuristics`,
+        message: `Qwen edit judging failed (${String(err).slice(0, 180)}) - continuing with local pixel scoring`,
       }),
     );
   }
@@ -238,25 +170,25 @@ export class RunManager {
   private buildFrameScorer(
     cfg: AppConfig,
     local: FrameScorer,
-    emit: (e: RunEvent) => void,
+    emit: (event: RunEvent) => void,
   ): FrameScorer {
-    if (!["akashml", "openai", "gemini", "openrouter"].includes(cfg.judge.provider)) return local;
+    if (cfg.judge.provider === "heuristic") return local;
     return new LlmFrameScorer(local, cfg.judge, (err) =>
       emit({
         type: "judge:fallback",
-        message: `${cfg.judge.provider} frame selection failed (${String(err).slice(0, 180)}) — continuing with pixel scoring`,
+        message: `Qwen frame selection failed (${String(err).slice(0, 180)}) - continuing with local pixel scoring`,
       }),
     );
   }
 }
 
-function toRoundInfo(r: LoopRound<unknown>): RoundInfo {
+function toRoundInfo(round: LoopRound<unknown>): RoundInfo {
   return {
-    round: r.round,
-    score: r.score,
-    critique: r.critique,
-    correction: r.correction,
-    cached: r.scoreCached,
-    durationMs: r.durationMs,
+    round: round.round,
+    score: round.score,
+    critique: round.critique,
+    correction: round.correction,
+    cached: round.scoreCached,
+    durationMs: round.durationMs,
   };
 }

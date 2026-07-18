@@ -60,7 +60,10 @@ export class LlmFrameScorer implements FrameScorer {
     for (const frame of frames) {
       const jpeg = await readFile(frame.uri);
       content.push({ type: "text", text: `${frame.id} at ${frame.t.toFixed(2)} seconds` });
-      content.push({ type: "image_url", image_url: { url: `data:image/jpeg;base64,${jpeg.toString("base64")}` } });
+      content.push({
+        type: "image_url",
+        image_url: { url: `data:image/jpeg;base64,${jpeg.toString("base64")}` },
+      });
     }
 
     const res = await fetch(`${this.cfg.baseUrl}/chat/completions`, {
@@ -80,7 +83,7 @@ export class LlmFrameScorer implements FrameScorer {
       }),
     });
     if (!res.ok) {
-      throw new Error(`${this.cfg.provider} frame scorer failed: ${res.status} ${(await res.text()).slice(0, 240)}`);
+      throw new Error(`Qwen frame scorer failed: ${res.status} ${(await res.text()).slice(0, 240)}`);
     }
     const body = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
     return parseFrameScores(body.choices?.[0]?.message?.content ?? "", frames.map((f) => f.id));

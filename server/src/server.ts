@@ -17,7 +17,7 @@ const PORT = Number(process.env.PORT ?? 4000);
 const urlFor = (absPath: string) => "/media/" + path.relative(DATA_DIR, absPath).split(path.sep).join("/");
 const resolvePath = (url: string) => path.join(DATA_DIR, url.replace(/^\/media\//, ""));
 const safeVideoPath = (videoId: unknown): string | undefined => {
-  if (typeof videoId !== "string" || !/^[\w.-]+$/.test(videoId)) return undefined;
+  if (typeof videoId !== "string" || !/^[a-f0-9]{8}\.[a-z0-9]{1,5}$/i.test(videoId)) return undefined;
   return path.join(DATA_DIR, "uploads", videoId);
 };
 
@@ -25,12 +25,18 @@ const runs = new RunManager(DATA_DIR, urlFor, resolvePath);
 
 const upload = multer({
   storage: multer.diskStorage({
-    destination: async (_req, _file, cb) => {
+    destination: (_req, _file, cb) => {
       const dir = path.join(DATA_DIR, "uploads");
-      await mkdir(dir, { recursive: true });
-      cb(null, dir);
+      mkdir(dir, { recursive: true }).then(
+        () => cb(null, dir),
+        (error: Error) => cb(error, dir),
+      );
     },
-    filename: (_req, file, cb) => cb(null, `${randomUUID().slice(0, 8)}${path.extname(file.originalname) || ".mp4"}`),
+    filename: (_req, file, cb) => {
+      const originalExt = path.extname(file.originalname).toLowerCase();
+      const extension = /^\.[a-z0-9]{1,5}$/.test(originalExt) ? originalExt : ".mp4";
+      cb(null, `${randomUUID().slice(0, 8)}${extension}`);
+    },
   }),
   limits: { fileSize: 300 * 1024 * 1024 },
 });
@@ -46,14 +52,14 @@ app.post("/api/upload", upload.single("video"), (req, res) => {
 });
 
 app.post("/api/run", (req, res) => {
-  const { videoId, n = 3, editorBackend = "local", flourish = true } = req.body ?? {};
+  const { videoId, n = 3 } = req.body ?? {};
   const videoPath = safeVideoPath(videoId);
   if (!videoPath || !existsSync(videoPath)) return res.status(400).json({ error: "unknown videoId" });
+  const requestedCount = Number(n);
+  const shotCount = Number.isFinite(requestedCount) ? Math.max(1, Math.min(8, Math.round(requestedCount))) : 3;
   const runId = runs.start({
     videoPath,
-    n: Math.max(1, Math.min(8, Number(n))),
-    editorBackend: editorBackend === "zero" ? "zero" : "local",
-    flourish: Boolean(flourish),
+    n: shotCount,
   });
   res.json({ runId });
 });

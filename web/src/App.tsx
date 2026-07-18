@@ -19,7 +19,6 @@ const PHASE_LABEL: Record<string, string> = {
   extracting: "extracting frames",
   loop1: "loop 1 / selecting frames",
   loop2: "loop 2 / refining edits",
-  flourish: "zero.xyz pro pass",
 };
 
 const GITHUB_URL = "https://github.com/paulyao825/precious-frame";
@@ -119,11 +118,8 @@ export default function App() {
           </button>
           {state.config && (
             <>
-              <span className={`backend-chip big ${state.config.editorBackend}`}>
-                editor: {state.config.editorBackend}
-              </span>
+              <span className="judge-chip">vision: {state.config.selector}</span>
               <span className="judge-chip">judge: {state.config.judge}</span>
-              <span className="judge-chip">compute: {state.config.compute}</span>
             </>
           )}
           {busy && <Spinner label={PHASE_LABEL[state.phase] ?? state.phase} />}
@@ -136,7 +132,7 @@ export default function App() {
       </header>
 
       {error && <div className="error-banner">{error}</div>}
-      {state.config?.judgeNote && <div className="info-banner">Judge: {state.config.judgeNote}</div>}
+      {state.config?.judgeNote && <div className="info-banner">Vision: {state.config.judgeNote}</div>}
       {state.judgeFallback && <div className="info-banner">{state.judgeFallback}</div>}
 
       {isLanding ? (
@@ -173,7 +169,6 @@ export default function App() {
                       key={frameId}
                       frame={frameById.get(frameId)}
                       loop={loop}
-                      backend={state.config?.editorBackend ?? "local"}
                       bar={state.config?.bar}
                     />
                   ) : null;
@@ -182,13 +177,7 @@ export default function App() {
             </section>
           )}
 
-          {state.phase === "flourish" && (
-            <section className="card fade-in">
-              <Spinner label={`zero.xyz pro enhancement on ${state.flourish?.frameId}...`} />
-            </section>
-          )}
-
-          {state.results && <FinalGallery results={state.results} flourishVia={state.flourish?.via} />}
+          {state.results && <FinalGallery results={state.results} />}
         </main>
       )}
 
@@ -197,7 +186,7 @@ export default function App() {
           <strong>Precious Frame.</strong>
           <span>AI visual storytelling assistant</span>
         </div>
-        <span>Built with Akash, Amazon Web Services, Cursor, TypeScript, and Zero.xyz.</span>
+        <span>Built with React, Express, TypeScript, FFmpeg, Sharp, and Qwen3-VL.</span>
         <a href={GITHUB_URL} target="_blank" rel="noreferrer">Source on GitHub ↗</a>
       </footer>
     </div>
@@ -373,15 +362,15 @@ function LandingPage({ busy, onRunFile }: { busy: boolean; onRunFile: (file: Fil
           <h2>A visible, inspectable AI workflow.</h2>
         </header>
         <div className="stack-grid">
-          <article><strong>AkashML</strong><span>Multimodal Qwen selects frames and judges edits</span></article>
-          <article><strong>AWS</strong><span>Optional Bedrock judging and S3 image hosting</span></article>
-          <article><strong>Akash</strong><span>Container-ready distributed compute deployment</span></article>
-          <article><strong>Zero.xyz</strong><span>Capability discovery and optional paid flourish pass</span></article>
-          <article><strong>TypeScript</strong><span>One streamed product workflow from API to interface</span></article>
+          <article><strong>Qwen3-VL</strong><span>Multimodal frame selection and concrete edit judgment</span></article>
+          <article><strong>FFmpeg</strong><span>Reliable frame extraction from uploaded video</span></article>
+          <article><strong>Sharp</strong><span>Local crop, color, exposure, and detail adjustments</span></article>
+          <article><strong>React + Express</strong><span>Upload interface, progress stream, and results</span></article>
+          <article><strong>TypeScript</strong><span>One typed workflow from API to interface</span></article>
         </div>
         <p className="stack-note">
-          Every run streams its plan, scores, corrections, fallbacks, and final output live. The system keeps working
-          locally when remote credentials or paid services are unavailable.
+          Qwen-VL is the only external processing service. Video extraction and image edits run locally, and the workflow
+          falls back to local image analysis when the vision API is unavailable.
         </p>
       </section>
 

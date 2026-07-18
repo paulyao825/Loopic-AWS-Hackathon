@@ -40,8 +40,6 @@ export async function uploadVideo(file: File): Promise<string> {
 export async function startRun(opts: {
   videoId: string;
   n: number;
-  editorBackend: "local" | "zero";
-  flourish: boolean;
 }): Promise<string> {
   const res = await fetch(api("/api/run"), {
     method: "POST",

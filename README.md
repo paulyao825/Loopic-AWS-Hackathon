@@ -1,212 +1,182 @@
 # Precious Frame - AI visual storytelling assistant
 
-Precious Frame finds the best photos hidden inside videos. Upload a video, and the
-agent extracts candidate frames, selects the strongest and most varied moments,
-then improves each one through a critique-and-refine loop.
+Precious Frame finds the best real photographs hidden inside videos. Upload a
+video and the app extracts candidate frames, asks Qwen-VL to identify the
+strongest and most varied moments, then improves each selected frame through a
+visible critique-and-refine loop.
 
-**Don't miss any frames.** Precious Frame does not create fake AI pictures. It uses AI to
-attract real-world clip photos: the actual moments already inside your videos.
+**Don't miss any frames.**
 
-The current prototype focuses on discovering and improving strong photo moments:
+**We don't like AI-generated pics. We use AI to attract real-world clip photos.**
 
-- frame extraction from raw video
-- multimodal frame selection for composition, real moments, and storytelling
-- local visual scoring for sharpness, exposure, contrast, color, and interest
-- looped edit refinement with named corrections
-- visible round history, score changes, and final output gallery
-- AWS Bedrock judge support and optional S3 image hosting
-- Zero.xyz discovery and optional paid flourish pass
-- Akash-ready container deployment
+Precious Frame does not generate replacement scenes. Every result starts as a
+real frame from the uploaded video.
 
-Every run is streamed live to the UI. You can see the agent plan, act, observe,
-score, correct, and stop when the output clears the quality bar.
+## Current prototype
 
-## Run it
+- extracts frames from uploaded videos with FFmpeg
+- scores composition, authentic moments, action, and visual storytelling with Qwen3-VL Plus
+- combines vision judgment with local sharpness, exposure, color, and activity measurements
+- removes near-duplicates to return a varied photo set
+- improves crop, exposure, contrast, saturation, temperature, and sharpness with Sharp
+- streams every selection and edit round to the React interface
+- falls back to local image analysis if the vision API is unavailable
+- supports light and dark modes and links directly to the source repository
 
-```bash
-npm install
+## Simple stack
 
-# API on :4000, UI on :5173 with hot reload
-npm run dev
+| Part | Tool | Why it is here |
+| --- | --- | --- |
+| Web interface | React + Vite | Uploads, progress, comparisons, and final gallery |
+| API | Express | Video upload, run orchestration, and SSE progress stream |
+| Language | TypeScript | One typed codebase from UI to processing pipeline |
+| Video processing | FFmpeg | Reliable extraction of actual video frames |
+| Image processing | Sharp | Fast local crop, color, exposure, and detail edits |
+| Vision model | Qwen3-VL Plus | Selects meaningful frames and judges edit quality |
 
-# or build the UI once and serve everything from the API
-npm run build && npm start
-```
-
-Open the app and upload a video file to start a run.
-
-Extra:
-
-- `npm run demo` - all-mock console demo
-- `npm test` - unit tests for model-output parsing and score weighting
+Qwen-VL is the only external processing service. There are no wallet tools, paid
+enhancement brokers, or extra cloud SDKs in the application.
 
 ## Required setup
 
-Only one external service is required for AI frame selection:
+Qwen-VL uses Alibaba Cloud Model Studio and requires a region-matched DashScope
+API key.
 
-1. Create an AkashML account and generate a new key in **Settings -> API Keys**.
+1. Activate Alibaba Cloud Model Studio in the US (Virginia) region and create a DashScope API key.
 2. Copy `.env.example` to `.env`.
-3. Set `AKASHML_API_KEY` in `.env`. Never commit or paste the value into chat.
-4. Keep `judge.provider` as `"akashml"` in `precious-frame.config.json`.
+3. Put the new key after `DASHSCOPE_API_KEY=`.
+4. Keep `.env` local. It is ignored by Git.
 
-AkashML API keys use the `akml-...` format. An Akash Console deployment key is
-not an inference key and cannot call a vision model. The configured default is
-`Qwen/Qwen3.5-35B-A3B`, a multimodal model. You can override it with
-`JUDGE_MODEL` after confirming another model reports image input support in
-`GET https://api.akashml.com/v1/models`.
+```dotenv
+DASHSCOPE_API_KEY=your-new-key
+VISION_MODEL=qwen3-vl-plus
+VISION_BASE_URL=https://dashscope-us.aliyuncs.com/compatible-mode/v1
+```
 
-Without an AkashML key, the full app still runs using local pixel scoring and
-shows the fallback in the infrastructure panel.
+The server calls the official OpenAI-compatible endpoint:
 
-## Configuration - `precious-frame.config.json`
+```txt
+POST https://dashscope-us.aliyuncs.com/compatible-mode/v1/chat/completions
+```
 
-The config file is reloaded on every run, so edits apply without restarting the
-server.
+If `DASHSCOPE_API_KEY` is missing or a model request fails, the run continues with
+local pixel scoring and reports the fallback in the interface.
+
+## Run locally
+
+Requires Node.js 22 or later.
+
+```bash
+npm install
+npm run dev
+```
+
+- Web interface: `http://localhost:5173`
+- API: `http://localhost:4000`
+
+Production-style local run:
+
+```bash
+npm run build
+npm start
+```
+
+The API then serves the built website at `http://localhost:4000`.
+
+Useful checks:
+
+```bash
+npm test
+npm run typecheck
+npm run build
+```
+
+## Configuration
+
+`precious-frame.config.json` is reloaded for each run:
 
 ```jsonc
 {
   "judge": {
-    "provider": "akashml",     // akashml | heuristic | openai | gemini | anthropic | openrouter | bedrock
-    "model": "Qwen/Qwen3.5-35B-A3B",
-    "apiKeyEnv": "",           // empty = provider default env var
-    "baseUrl": ""              // override for proxies / compatible endpoints
+    "provider": "qwen",
+    "model": "qwen3-vl-plus",
+    "baseUrl": "https://dashscope-us.aliyuncs.com/compatible-mode/v1"
   },
-  "aws": {
-    "region": "us-east-1",
-    "s3Bucket": ""
-  },
-  "loop": { "bar": 7.5, "maxRounds": 8 },
-  "zero": {
-    "enabled": true,
-    "maxPayUsdc": 0,
-    "flourishQuery": "image upscale enhance super-resolution photo",
-    "editQuery": "photo image editing crop resize exposure"
+  "loop": {
+    "bar": 7.5,
+    "maxRounds": 8
   }
 }
 ```
 
-Put API keys in `.env`. Missing keys or provider errors degrade to local pixel
-scoring, and the UI shows the fallback reason.
+Set `VISION_PROVIDER=heuristic` only when an entirely offline run is required.
 
-## Technical stack audit
+## How it works
 
-| Component | Needed now | Setup | Simpler default |
-| --- | --- | --- | --- |
-| Node.js 22 + TypeScript | Yes | Install Node.js, then `npm install` | Existing stack |
-| ffmpeg-static | Yes | Installed by npm | No system FFmpeg install |
-| Sharp | Yes | Installed by npm | Local crop, color, and sharpen |
-| AkashML vision API | Yes for AI selection | New `AKASHML_API_KEY` in `.env` or host secrets | Falls back to local scorer |
-| Container host | Yes for production API | Deploy the included Dockerfile | Railway/Render is easier; Akash fits the hackathon |
-| Vercel | Frontend only | Set `VITE_API_BASE` to the container API URL | Keep the existing Vercel site |
-| AWS Bedrock / S3 | No | AWS credentials and optional bucket | Use AkashML + local run storage |
-| Zero.xyz | No | Login, funded wallet, explicit budget | Use local Sharp; zero spend by default |
-
-The API accepts videos up to 300MB and keeps an SSE connection open while
-FFmpeg and the model run. Vercel Functions cap request bodies at 4.5MB, so the
-production API must run as the included long-lived container. Vercel remains a
-good static frontend host once `VITE_API_BASE` points to that container.
-
-## Built With
-
-- Akash
-- AkashML
-- Amazon Web Services
-- Cursor
-- TypeScript
-- Zero.xyz
-
-## AWS
-
-Precious Frame includes two AWS integration points:
-
-- **Bedrock vision judge** - set `judge.provider` to `"bedrock"` and the edit
-  critique runs through AWS Bedrock using the SDK default credential chain.
-- **S3 image hosting** - set `aws.s3Bucket` to host intermediate images through
-  presigned URLs for remote editor calls.
-
-If AWS credentials are missing, the run continues with the heuristic judge and
-shows the fallback note in the UI.
-
-## Zero.xyz
-
-Precious Frame uses `@zeroxyz/cli` for live capability discovery. Discovery is free and
-visible in the infrastructure panel.
-
-Paid invocation is gated:
-
-1. Run `npx zero auth login`.
-2. Fund the wallet with USDC on Base.
-3. Set `zero.maxPayUsdc` in `precious-frame.config.json`.
-
-Without a wallet or budget, Precious Frame still works. The final flourish falls back to
-a local enhancement pass and reports that clearly.
-
-## Akash
-
-The repo includes:
-
-- `Dockerfile` - single container serving API + built web UI
-- `deploy/akash.sdl.yaml` - Akash deployment template
-
-Precious Frame detects Akash provider environment variables at runtime and reports the
-compute host in the UI infrastructure panel.
-
-## How It Works
-
-Precious Frame uses one reusable loop abstraction:
+Precious Frame uses one reusable loop:
 
 ```txt
 act -> observe -> score -> correct -> repeat
 ```
 
-Two product loops plug into it:
-
 | Loop | Goal | Output |
 | --- | --- | --- |
-| Loop 1 | Multimodal aesthetic score + pixel quality + diversity | Candidate photos |
-| Loop 2 | Improve each chosen frame through bounded edits | Refined photos |
+| Loop 1 | Combine Qwen-VL aesthetic judgment, local image quality, and diversity | Candidate photos |
+| Loop 2 | Judge and improve each candidate through bounded edits | Refined photos |
 
-Loop 1 sends six extracted frames per model request, combines the model's
-aesthetic score (55%) with local sharpness, exposure, and visual activity, then
-removes near-duplicates. The edit loop changes one parameter at a time: crop, exposure, contrast,
-saturation, temperature, or sharpening. A judge scores concrete visual axes and
-returns directional hints such as `brighten`, `tighten`, or `warmer`.
+Loop 1 sends small batches of extracted images to Qwen3-VL Plus. The model scores
+composition, a clear subject, human emotion or action, and storytelling value.
+The pipeline combines that score with local measurements and removes visually
+similar frames.
 
-## What's Next for Precious Frame
+Loop 2 changes one parameter at a time. Qwen-VL evaluates crop and framing,
+exposure, contrast, color, white balance, and sharpness, then returns a concrete
+direction such as `brighten`, `tighten`, or `warmer`. Sharp applies that change
+to the original frame. The loop stops when it clears the score bar or reaches
+the round cap.
 
-While the current prototype focuses on discovering and improving the best
-moments hidden inside videos, Precious Frame can become a complete AI visual storytelling
-assistant.
+## Deployment
 
-Future directions:
+The included `Dockerfile` serves both the API and built website from one common
+Node.js container. Deploy it to a long-running container host such as Railway,
+Render, or Fly.io and add `DASHSCOPE_API_KEY` as a secret environment variable.
+
+The application accepts large video uploads and keeps a live SSE stream open
+while frames are processed. A static website host can serve the React frontend,
+but the processing API still needs a long-running container. Set
+`VITE_API_BASE` to that API URL when deploying the frontend separately.
+
+## What's next for Precious Frame
+
+The current prototype focuses on finding and improving strong moments. The
+larger direction is a complete AI visual storytelling assistant.
 
 1. **Personalized AI aesthetic model** - learn from saved photos, preferred
-   styles, previous editing choices, and engagement patterns to understand what
-   makes a photo feel like each user.
-2. **Advanced style transformation** - create CCD camera aesthetics, Y2K styles,
-   film photography, cinematic color grading, magazine/editorial looks, meme
+   styles, previous edits, and engagement patterns to understand what makes a
+   photo feel like each user.
+2. **Advanced style transformation** - create CCD camera aesthetics, Y2K
+   styles, film photography, cinematic color grading, editorial looks, meme
    templates, and platform-specific formats.
-3. **Intelligent content repurposing** - transform videos into Instagram posts,
-   TikTok thumbnails, YouTube thumbnails, profile photos, highlight covers, and
-   promotional materials.
+3. **Intelligent content repurposing** - prepare Instagram posts, TikTok and
+   YouTube thumbnails, profile photos, highlight covers, and promotional assets.
 4. **AI creative assistant for professionals** - support photo culling, batch
-   editing suggestions, consistent style matching, client-specific preferences,
-   and faster post-production workflows.
-5. **Photo intelligence SDK** - let camera apps, social platforms, creator tools,
-   sports/event platforms, memory apps, and travel apps integrate Precious Frame as an AI
-   layer for understanding which moments matter.
+   editing suggestions, consistent style matching, client preferences, and
+   faster post-production.
+5. **Photo intelligence SDK** - let camera apps, creator tools, social
+   platforms, sports and event products, and memory or travel apps understand
+   which moments matter.
 
-Today, Precious Frame finds the best photos hidden inside videos. Tomorrow, Precious Frame
+Today, Precious Frame finds the best photos hidden inside videos. Tomorrow, it
 becomes the AI that understands every visual moment worth remembering.
 
-## Repo Layout
+## Repository layout
 
 ```txt
 server/src/core/loop.ts          reusable act/observe/score/correct loop
-server/src/loops/                frame selection and edit refinement specs
-server/src/backends/             editor, judge, scorer, AWS, Zero.xyz, compute
-server/src/media/                ffmpeg and sharp image analysis
-server/src/api/                  run orchestration and event types
-server/src/server.ts             Express API, uploads, SSE, static web serving
-web/                             React + Vite frontend
+server/src/loops/                frame selection and edit refinement
+server/src/backends/             Qwen-VL judge/scorer and Sharp editor
+server/src/media/                FFmpeg extraction and image analysis
+server/src/api/                  run orchestration and streamed event types
+server/src/server.ts             Express API, uploads, SSE, and static web
+web/                             React + Vite interface
 ```

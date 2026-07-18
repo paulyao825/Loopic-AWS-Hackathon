@@ -39,27 +39,10 @@ export interface Recipe {
   sharpen: number;
 }
 
-export interface ZeroCapabilityInfo {
-  name: string;
-  slug: string;
-  pricing: string;
-  status: string;
-}
-
-export interface ZeroDiscoveryInfo {
-  purpose: "flourish" | "editor";
-  query: string;
-  capability?: ZeroCapabilityInfo;
-  invocable: boolean;
-  note: string;
-}
-
 export interface ResultInfo {
   frameId: string;
   score: number;
   url: string;
-  flourishUrl?: string;
-  backend: string;
   winner: boolean;
 }
 
@@ -68,28 +51,19 @@ export type RunEvent =
       type: "run:init";
       runId: string;
       n: number;
-      editorBackend: "local" | "zero";
-      flourish: boolean;
       selector: string;
       judge: string;
       judgeNote?: string;
       bar: number;
-      compute: "akash" | "local";
-      computeNote: string;
-      awsNote?: string;
     }
-  | { type: "compute:task"; name: string; ms: number }
   | { type: "extract:start" }
   | { type: "extract:done"; frames: FrameInfo[] }
-  | ({ type: "zero:discovery" } & ZeroDiscoveryInfo)
   | { type: "judge:fallback"; message: string }
   | { type: "loop1:round"; info: RoundInfo; selectedIds: string[] }
   | { type: "loop1:done"; selectedIds: string[]; converged: boolean; bestScore: number }
   | { type: "loop2:start"; frameId: string }
   | { type: "loop2:round"; frameId: string; info: RoundInfo; imageUrl: string; recipe: Recipe }
   | { type: "loop2:done"; frameId: string; converged: boolean; bestScore: number; bestUrl: string; rounds: number }
-  | { type: "flourish:start"; frameId: string }
-  | { type: "flourish:done"; frameId: string; url: string; via: string; note?: string }
   | { type: "run:done"; results: ResultInfo[] }
   | { type: "run:error"; message: string };
 
@@ -110,7 +84,7 @@ export interface Loop2State {
   done?: { converged: boolean; bestScore: number; bestUrl: string; rounds: number };
 }
 
-export type Phase = "idle" | "uploading" | "extracting" | "loop1" | "loop2" | "flourish" | "done" | "error";
+export type Phase = "idle" | "uploading" | "extracting" | "loop1" | "loop2" | "done" | "error";
 
 export interface RunState {
   phase: Phase;
@@ -118,32 +92,22 @@ export interface RunState {
   error?: string;
   config?: {
     n: number;
-    editorBackend: "local" | "zero";
-    flourish: boolean;
     selector: string;
     judge: string;
     judgeNote?: string;
     bar: number;
-    compute: "akash" | "local";
-    computeNote: string;
-    awsNote?: string;
   };
   judgeFallback?: string;
-  zeroDiscoveries: ZeroDiscoveryInfo[];
-  computeTasks: Array<{ name: string; ms: number }>;
   frames: FrameInfo[];
   loop1Rounds: Loop1Round[];
   loop1Done?: { selectedIds: string[]; converged: boolean; bestScore: number };
   loop2: Record<string, Loop2State>;
   loop2Order: string[];
-  flourish?: { frameId: string; url?: string; via?: string; note?: string };
   results?: ResultInfo[];
 }
 
 export const initialRunState: RunState = {
   phase: "idle",
-  zeroDiscoveries: [],
-  computeTasks: [],
   frames: [],
   loop1Rounds: [],
   loop2: {},
@@ -159,29 +123,14 @@ export function reduceEvent(state: RunState, e: RunEvent): RunState {
         runId: e.runId,
         config: {
           n: e.n,
-          editorBackend: e.editorBackend,
-          flourish: e.flourish,
           selector: e.selector,
           judge: e.judge,
           judgeNote: e.judgeNote,
           bar: e.bar,
-          compute: e.compute,
-          computeNote: e.computeNote,
-          awsNote: e.awsNote,
         },
       };
-    case "compute:task":
-      return { ...state, computeTasks: [...state.computeTasks, { name: e.name, ms: e.ms }] };
     case "extract:start":
       return { ...state, phase: "extracting" };
-    case "zero:discovery":
-      return {
-        ...state,
-        zeroDiscoveries: [
-          ...state.zeroDiscoveries,
-          { purpose: e.purpose, query: e.query, capability: e.capability, invocable: e.invocable, note: e.note },
-        ],
-      };
     case "judge:fallback":
       return { ...state, judgeFallback: e.message };
     case "extract:done":
@@ -217,14 +166,13 @@ export function reduceEvent(state: RunState, e: RunEvent): RunState {
         ...state,
         loop2: {
           ...state.loop2,
-          [e.frameId]: { ...cur, done: { converged: e.converged, bestScore: e.bestScore, bestUrl: e.bestUrl, rounds: e.rounds } },
+          [e.frameId]: {
+            ...cur,
+            done: { converged: e.converged, bestScore: e.bestScore, bestUrl: e.bestUrl, rounds: e.rounds },
+          },
         },
       };
     }
-    case "flourish:start":
-      return { ...state, phase: "flourish", flourish: { frameId: e.frameId } };
-    case "flourish:done":
-      return { ...state, flourish: { frameId: e.frameId, url: e.url, via: e.via, note: e.note } };
     case "run:done":
       return { ...state, phase: "done", results: e.results };
     case "run:error":

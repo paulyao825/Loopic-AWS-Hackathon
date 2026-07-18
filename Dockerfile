@@ -1,6 +1,5 @@
-# Precious Frame — single container serving API + built web UI.
-# Used for the Akash deployment (deploy/akash.sdl.yaml) and works on any
-# container host (AWS ECS/App Runner included).
+# Precious Frame - single container serving the API and built web UI.
+# Works on common container hosts such as Railway, Render, and Fly.io.
 FROM node:22-slim AS build
 WORKDIR /app
 COPY package.json package-lock.json ./

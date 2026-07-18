@@ -2,8 +2,6 @@ import { useRef, useState } from "react";
 
 export interface RunOptions {
   n: number;
-  editorBackend: "local" | "zero";
-  flourish: boolean;
 }
 
 export function UploadPanel({
@@ -14,13 +12,11 @@ export function UploadPanel({
   onRunFile: (file: File, opts: RunOptions) => void;
 }) {
   const [n, setN] = useState(3);
-  const [backend, setBackend] = useState<"local" | "zero">("local");
-  const [flourish, setFlourish] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [dragging, setDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const opts: RunOptions = { n, editorBackend: backend, flourish };
+  const opts: RunOptions = { n };
 
   return (
     <section className="card upload-panel fade-in" id="upload">
@@ -71,22 +67,7 @@ export function UploadPanel({
           <input type="range" min={1} max={6} value={n} onChange={(e) => setN(Number(e.target.value))} />
         </label>
 
-        <div className="control">
-          <span className="control-label">editor backend</span>
-          <div className="segmented">
-            <button className={backend === "local" ? "on" : ""} onClick={() => setBackend("local")}>
-              local
-            </button>
-            <button className={backend === "zero" ? "on" : ""} onClick={() => setBackend("zero")}>
-              zero.xyz
-            </button>
-          </div>
-        </div>
-
-        <label className="control checkbox">
-          <input type="checkbox" checked={flourish} onChange={(e) => setFlourish(e.target.checked)} />
-          <span className="control-label">Zero.xyz pro flourish on winner</span>
-        </label>
+        <p className="muted">Frames are selected by Qwen-VL and refined locally with Sharp.</p>
       </div>
 
       <div className="actions">

@@ -3,7 +3,7 @@ export interface Frame {
   id: string;
   /** Timestamp in the source video, seconds. */
   t: number;
-  /** Path/URL to the frame image (mock frames use a fake path). */
+  /** Local path to the extracted frame image. */
   uri: string;
 }
 
