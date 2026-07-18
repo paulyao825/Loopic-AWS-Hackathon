@@ -13,7 +13,7 @@ export interface AppCopy {
   phase: { uploading: string; extracting: string; loop1: string; loop2: string };
   banners: { vision: string };
   pipeline: { loop2Title: string; loop2Note: string; loop2Tag: string };
-  footer: { assistant: string };
+  footer: { assistant: string; creator: string };
   landing: {
     editionPrototype: string;
     editionLoop: string;
@@ -128,7 +128,7 @@ export const COPY: Record<Language, AppCopy> = {
     phase: { uploading: "extracting video frames", extracting: "preparing frames", loop1: "loop 1 / selecting frames", loop2: "loop 2 / refining edits" },
     banners: { vision: "AI" },
     pipeline: { loop2Title: "Edit refinement", loop2Note: "one bounded correction per round, lowest-scoring axis first / bar", loop2Tag: "LOOP 2" },
-    footer: { assistant: "AI visual storytelling assistant" },
+    footer: { assistant: "AI visual storytelling assistant", creator: "Creator & builder:" },
     landing: {
       editionPrototype: "Prototype edition · 2026",
       editionLoop: "Loop engineering for visual stories",
@@ -228,7 +228,7 @@ export const COPY: Record<Language, AppCopy> = {
     phase: { uploading: "擷取影片影格", extracting: "準備影格", loop1: "迴圈一／選擇影格", loop2: "迴圈二／改善修圖" },
     banners: { vision: "AI" },
     pipeline: { loop2Title: "修圖改善", loop2Note: "每輪只做一項受控修正，優先處理最低分軸向／門檻", loop2Tag: "迴圈 2" },
-    footer: { assistant: "AI 視覺敘事助理" },
+    footer: { assistant: "AI 視覺敘事助理", creator: "創辦與製作：" },
     landing: {
       editionPrototype: "2026 · 原型版本",
       editionLoop: "以迴圈工程打造視覺故事",

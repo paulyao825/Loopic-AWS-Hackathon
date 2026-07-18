@@ -167,6 +167,10 @@ export default function App() {
         <div>
           <strong>Precious Frame.</strong>
           <span>{text.footer.assistant}</span>
+          <span>
+            {text.footer.creator} {" "}
+            <a href="https://www.linkedin.com/in/paulyao0825" target="_blank" rel="noreferrer">Paul Yao</a>
+          </span>
         </div>
       </footer>
     </div>
