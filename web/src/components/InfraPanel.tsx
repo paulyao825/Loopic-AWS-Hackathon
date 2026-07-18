@@ -4,7 +4,7 @@ export function InfraPanel({ state }: { state: RunState }) {
   const cfg = state.config;
   if (!cfg) return null;
 
-  const usesVisionApi = cfg.selector.startsWith("Kimi:");
+  const usesVisionApi = cfg.selector === "AI";
   return (
     <section className="card infra-panel fade-in">
       <header className="card-head">

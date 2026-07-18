@@ -66,7 +66,7 @@ export function loadAppConfig(): AppConfig {
         ).replace(/\/+$/, ""),
       };
     } else {
-      judge.note = "MOONSHOT_API_KEY is not set - using local pixel scoring";
+      judge.note = "AI provider key is not set - using local pixel scoring";
     }
   } else if (requestedProvider !== "heuristic") {
     judge.note = `unknown vision provider "${requestedProvider}" - using local pixel scoring`;

@@ -47,7 +47,7 @@ export class RunManager {
     const cfg = loadAppConfig();
     const editor: Editor = new SharpLocalEditor(path.join(runDir, "edits"), this.urlFor);
     const judge = this.buildJudge(cfg, req.preference, emit);
-    const visionLabel = cfg.judge.provider === "kimi" ? `Kimi:${cfg.judge.model}` : "local pixel scoring";
+    const visionLabel = cfg.judge.provider === "kimi" ? "AI" : "local pixel scoring";
 
     emit({
       type: "run:init",
@@ -135,7 +135,7 @@ export class RunManager {
     return new ResilientJudge(new LlmVisionJudge(this.resolvePath, cfg.judge, preference), local, (err) =>
       emit({
         type: "judge:fallback",
-        message: `Kimi edit judging failed (${String(err).slice(0, 180)}) - continuing with local pixel scoring`,
+        message: `AI edit judging failed (${String(err).slice(0, 180)}) - continuing with local pixel scoring`,
       }),
     );
   }
@@ -150,7 +150,7 @@ export class RunManager {
     return new LlmFrameScorer(local, cfg.judge, preference, (err) =>
       emit({
         type: "judge:fallback",
-        message: `Kimi frame selection failed (${String(err).slice(0, 180)}) - continuing with local pixel scoring`,
+        message: `AI frame selection failed (${String(err).slice(0, 180)}) - continuing with local pixel scoring`,
       }),
     );
   }

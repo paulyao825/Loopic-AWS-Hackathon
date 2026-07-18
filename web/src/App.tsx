@@ -179,7 +179,7 @@ export default function App() {
           <strong>Precious Frame.</strong>
           <span>AI visual storytelling assistant</span>
         </div>
-        <span>Built with React, Express, TypeScript, Browser Canvas, Sharp, and Kimi Vision.</span>
+        <span>Built with React, Express, TypeScript, Browser Canvas, Sharp, and AI.</span>
         <a href={GITHUB_URL} target="_blank" rel="noreferrer">Source on GitHub ↗</a>
       </footer>
     </div>
@@ -191,7 +191,7 @@ function LandingPage({ busy, onRunFile }: { busy: boolean; onRunFile: (file: Fil
     <main className="landing">
       <div className="edition-line">
         <span>Prototype edition · 2026</span>
-        <span>Video-to-photo intelligence</span>
+        <span>Loop engineering for visual stories</span>
         <span>Don&apos;t miss any frames</span>
       </div>
 
@@ -258,7 +258,7 @@ function LandingPage({ busy, onRunFile }: { busy: boolean; onRunFile: (file: Fil
         <header className="section-intro split-heading">
           <div>
             <span className="section-number">II.</span>
-            <p className="kicker">The method</p>
+            <p className="kicker">Loop engineering</p>
             <h2>It does not stop at the first answer.</h2>
           </div>
           <p>
@@ -355,14 +355,14 @@ function LandingPage({ busy, onRunFile }: { busy: boolean; onRunFile: (file: Fil
           <h2>A visible, inspectable AI workflow.</h2>
         </header>
         <div className="stack-grid">
-          <article><strong>Kimi K2.6</strong><span>Preference-aware frame selection and concrete edit judgment</span></article>
+          <article><strong>AI</strong><span>Preference-aware frame selection and concrete edit judgment</span></article>
           <article><strong>Browser Canvas</strong><span>Private, size-safe frame extraction from the selected video</span></article>
           <article><strong>Sharp</strong><span>Local crop, color, exposure, and detail adjustments</span></article>
           <article><strong>React + Express</strong><span>Upload interface, progress stream, and results</span></article>
           <article><strong>TypeScript</strong><span>One typed workflow from API to interface</span></article>
         </div>
         <p className="stack-note">
-          Kimi Vision is the only external processing service. Video extraction runs in the browser, image edits run locally, and the workflow
+          AI is the only external processing service. Video extraction runs in the browser, image edits run locally, and the workflow
           falls back to local image analysis when the vision API is unavailable.
         </p>
       </section>
