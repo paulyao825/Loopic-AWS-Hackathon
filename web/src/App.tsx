@@ -168,7 +168,6 @@ export default function App() {
           <strong>Precious Frame.</strong>
           <span>{text.footer.assistant}</span>
         </div>
-        <span>{text.footer.builtWith}</span>
       </footer>
     </div>
   );
@@ -319,20 +318,6 @@ function LandingPage({ busy, onRunFile, copy }: { busy: boolean; onRunFile: (fil
             {landing.proItems.map((item) => <li key={item}>{item}</li>)}
           </ul>
         </div>
-      </section>
-
-      <section className="story-section stack-section">
-        <header className="section-intro">
-          <span className="section-number">VI.</span>
-          <p className="kicker">{landing.stackKicker}</p>
-          <h2>{landing.stackTitle}</h2>
-        </header>
-        <div className="stack-grid">
-          {landing.stackItems.map((item) => <article key={item.title}><strong>{item.title}</strong><span>{item.copy}</span></article>)}
-        </div>
-        <p className="stack-note">
-          {landing.stackNote}
-        </p>
       </section>
 
       <section className="closing-section">

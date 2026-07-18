@@ -13,7 +13,7 @@ export interface AppCopy {
   phase: { uploading: string; extracting: string; loop1: string; loop2: string };
   banners: { vision: string };
   pipeline: { loop2Title: string; loop2Note: string; loop2Tag: string };
-  footer: { assistant: string; builtWith: string };
+  footer: { assistant: string };
   landing: {
     editionPrototype: string;
     editionLoop: string;
@@ -52,10 +52,6 @@ export interface AppCopy {
     proTitle: string;
     proDescription: string;
     proItems: string[];
-    stackKicker: string;
-    stackTitle: string;
-    stackItems: Array<{ title: string; copy: string }>;
-    stackNote: string;
     closingKicker: string;
     closingTitle: string;
     uploadVideo: string;
@@ -132,7 +128,7 @@ export const COPY: Record<Language, AppCopy> = {
     phase: { uploading: "extracting video frames", extracting: "preparing frames", loop1: "loop 1 / selecting frames", loop2: "loop 2 / refining edits" },
     banners: { vision: "AI" },
     pipeline: { loop2Title: "Edit refinement", loop2Note: "one bounded correction per round, lowest-scoring axis first / bar", loop2Tag: "LOOP 2" },
-    footer: { assistant: "AI visual storytelling assistant", builtWith: "Built with React, Express, TypeScript, Browser Canvas, Sharp, and AI." },
+    footer: { assistant: "AI visual storytelling assistant" },
     landing: {
       editionPrototype: "Prototype edition · 2026",
       editionLoop: "Loop engineering for visual stories",
@@ -181,16 +177,6 @@ export const COPY: Record<Language, AppCopy> = {
       proTitle: "More time creating. Less time sorting.",
       proDescription: "Precious Frame is not intended to replace a photographer's eye. It is an editing partner for the repetitive work: culling, comparing, checking consistency, and preparing a first pass.",
       proItems: ["Automatic photo culling", "Batch editing suggestions", "Consistent style matching", "Client-specific preferences"],
-      stackKicker: "Under the press",
-      stackTitle: "A visible, inspectable AI workflow.",
-      stackItems: [
-        { title: "AI", copy: "Preference-aware frame selection and concrete edit judgment" },
-        { title: "Browser Canvas", copy: "Private, size-safe frame extraction from the selected video" },
-        { title: "Sharp", copy: "Local crop, color, exposure, and detail adjustments" },
-        { title: "React + Express", copy: "Upload interface, progress stream, and results" },
-        { title: "TypeScript", copy: "One typed workflow from API to interface" },
-      ],
-      stackNote: "AI is the only external processing service. Video extraction runs in the browser, image edits run locally, and the workflow falls back to local image analysis when the vision API is unavailable.",
       closingKicker: "The next frame is already there",
       closingTitle: "Turn motion into something worth remembering.",
       uploadVideo: "Upload a video",
@@ -242,7 +228,7 @@ export const COPY: Record<Language, AppCopy> = {
     phase: { uploading: "擷取影片影格", extracting: "準備影格", loop1: "迴圈一／選擇影格", loop2: "迴圈二／改善修圖" },
     banners: { vision: "AI" },
     pipeline: { loop2Title: "修圖改善", loop2Note: "每輪只做一項受控修正，優先處理最低分軸向／門檻", loop2Tag: "迴圈 2" },
-    footer: { assistant: "AI 視覺敘事助理", builtWith: "使用 React、Express、TypeScript、Browser Canvas、Sharp 與 AI 建置。" },
+    footer: { assistant: "AI 視覺敘事助理" },
     landing: {
       editionPrototype: "2026 · 原型版本",
       editionLoop: "以迴圈工程打造視覺故事",
@@ -291,16 +277,6 @@ export const COPY: Record<Language, AppCopy> = {
       proTitle: "把時間留給創作，少花時間整理。",
       proDescription: "Precious Frame 不打算取代攝影師的眼睛，而是成為重複工作的修圖夥伴：篩選、比較、檢查一致性，並準備第一版成果。",
       proItems: ["自動照片篩選", "批次修圖建議", "一致的風格比對", "客戶專屬偏好"],
-      stackKicker: "幕後技術",
-      stackTitle: "一套可看見、可檢查的 AI 工作流程。",
-      stackItems: [
-        { title: "AI", copy: "依照偏好選擇影格，並做出具體的修圖判斷" },
-        { title: "Browser Canvas", copy: "從選定影片中私密且符合大小限制地擷取影格" },
-        { title: "Sharp", copy: "在本機處理裁切、色彩、曝光與細節調整" },
-        { title: "React + Express", copy: "上傳介面、進度串流與成果呈現" },
-        { title: "TypeScript", copy: "從 API 到介面的完整型別化流程" },
-      ],
-      stackNote: "AI 是唯一的外部處理服務。影片在瀏覽器中擷取，照片在本機修整；當視覺 API 無法使用時，流程會退回本機影像分析。",
       closingKicker: "下一個瞬間已經在那裡",
       closingTitle: "把動態變成值得記住的畫面。",
       uploadVideo: "上傳影片",
