@@ -19,6 +19,15 @@ export function FinalGallery({ results, copy }: { results: ResultInfo[]; copy: A
             <figcaption>
               <span className="mono">{result.frameId}</span>
               <ScorePill score={result.score} />
+              <a
+                className="save-result"
+                href={result.url}
+                download={`precious-frame-${result.frameId}.jpg`}
+                aria-label={`${copy.output.save}: ${result.frameId}`}
+                title={copy.output.save}
+              >
+                ↓
+              </a>
             </figcaption>
           </figure>
         ))}

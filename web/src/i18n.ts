@@ -97,7 +97,7 @@ export interface AppCopy {
     scrub: string;
     cached: string;
   };
-  output: { tag: string; title: string; winner: string };
+  output: { tag: string; title: string; winner: string; save: string };
 }
 
 export const COPY: Record<Language, AppCopy> = {
@@ -189,7 +189,7 @@ export const COPY: Record<Language, AppCopy> = {
     infra: { stack: "Processing stack", frameIntelligence: "Frame intelligence", selected: "selected", preference: "Photo preference", processing: "Video and image processing", local: "local", browserNote: "The browser extracts real frames; Sharp applies crop, color, and detail edits.", api: "Application API", standard: "standard", apiNote: "Express processes frames and streams the complete run over one SSE request." },
     loop1: { title: "Frame selection", clearedBar: "cleared bar", roundCap: "round cap", reranking: "re-ranking…", round: "round" },
     loop2: { preparing: "preparing", clearedBar: "cleared bar", roundCap: "round cap", round: "round", scrub: "scrub rounds", cached: "cached" },
-    output: { tag: "OUTPUT", title: "Finished set", winner: "WINNER" },
+    output: { tag: "OUTPUT", title: "Finished set", winner: "WINNER", save: "Save photo" },
   },
   "zh-Hant": {
     languageButton: "EN",
@@ -279,6 +279,6 @@ export const COPY: Record<Language, AppCopy> = {
     infra: { stack: "處理技術堆疊", frameIntelligence: "影格智慧", selected: "已選擇", preference: "照片偏好", processing: "影片與影像處理", local: "本機", browserNote: "瀏覽器擷取真實影格；Sharp 套用裁切、色彩與細節調整。", api: "應用程式 API", standard: "標準", apiNote: "Express 處理影格，並透過單一 SSE 請求串流完整流程。" },
     loop1: { title: "影格選擇", clearedBar: "通過門檻", roundCap: "達到輪數上限", reranking: "重新排名…", round: "第" },
     loop2: { preparing: "準備中", clearedBar: "通過門檻", roundCap: "達到輪數上限", round: "第", scrub: "拖曳查看各輪", cached: "已快取" },
-    output: { tag: "成果", title: "完成的照片組", winner: "最佳照片" },
+    output: { tag: "成果", title: "完成的照片組", winner: "最佳照片", save: "下載照片" },
   },
 };

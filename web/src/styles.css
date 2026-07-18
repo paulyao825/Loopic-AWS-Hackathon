@@ -1200,6 +1200,26 @@ h3 {
   border-top: 1px solid var(--rule-soft);
 }
 
+.save-result {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  margin-left: auto;
+  border: 1px solid var(--rule-soft);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 17px;
+  line-height: 1;
+  text-decoration: none;
+}
+
+.save-result:hover {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff8ec;
+}
+
 .result-card.winner {
   border: 3px solid var(--accent);
 }
