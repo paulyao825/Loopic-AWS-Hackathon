@@ -224,7 +224,8 @@ h3 {
 
 .hero {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 860px) minmax(220px, 1fr);
+  gap: 56px;
   align-items: center;
   min-height: 620px;
   padding: 64px 0 56px;
@@ -233,6 +234,19 @@ h3 {
 
 .hero-copy {
   max-width: 860px;
+}
+
+.hero-side-cta {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.hero-catch {
+  width: min(100%, 280px);
+  min-height: 78px;
+  padding: 18px 24px;
+  font-size: 13px;
+  text-align: center;
 }
 
 .kicker,
@@ -1434,6 +1448,10 @@ h3 {
     grid-template-columns: 1fr;
     gap: 42px;
     padding-top: 54px;
+  }
+
+  .hero-side-cta {
+    justify-content: flex-start;
   }
 
   .hero-copy h1 {
