@@ -65,12 +65,13 @@ export function makeEditRefinementLoop(
   frame: Frame,
   editor: Editor,
   judge: VisionJudge,
-  opts: { bar?: number; maxRounds?: number } = {},
+  opts: { bar?: number; maxRounds?: number; minRounds?: number } = {},
 ): LoopSpec<RefineState, EditedImage, Critique> {
   return {
     name: `edit-refine:${frame.id}`,
     bar: opts.bar ?? 8.5,
     maxRounds: opts.maxRounds ?? 10,
+    minRounds: opts.minRounds,
     candidateKey: (img) => `${img.frameId}:${recipeSlug(img.recipe)}`,
 
     async act(state) {

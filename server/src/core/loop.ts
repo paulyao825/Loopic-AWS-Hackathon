@@ -29,6 +29,14 @@ export interface LoopSpec<S, C, O> {
   /** Overall score needed to stop early. */
   bar: number;
   maxRounds: number;
+  /**
+   * Minimum rounds before the bar is allowed to end the loop early.
+   * Defaults to 1 (converge as soon as round 1 clears the bar). Raise it
+   * to force at least one correction round even when the candidate already
+   * clears the bar — e.g. when the user gave direct feedback and expects a
+   * visible edit rather than the unchanged image handed straight back.
+   */
+  minRounds?: number;
   /** Stable key for a candidate — used to cache scores (reward in seconds). */
   candidateKey(candidate: C): string;
   /** Produce a candidate from the current state. */
@@ -97,6 +105,7 @@ export async function runLoop<S, C, O>(
   let bestScore = -Infinity;
   let bestCritique: Critique = {};
   let converged = false;
+  const minRounds = Math.max(1, spec.minRounds ?? 1);
 
   for (let round = 1; round <= spec.maxRounds; round++) {
     const started = Date.now();
@@ -127,7 +136,7 @@ export async function runLoop<S, C, O>(
       bestCritique = result.critique;
     }
 
-    if (result.score >= spec.bar) {
+    if (result.score >= spec.bar && round >= minRounds) {
       converged = true;
       rounds.push(log);
       hooks?.onRound?.(log);

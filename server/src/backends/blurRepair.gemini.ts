@@ -22,7 +22,10 @@ export class NanoBananaBlurRepair {
           { type: "text", text: REPAIR_PROMPT },
           { type: "image", mime_type: "image/jpeg", data: image.toString("base64") },
         ],
-        response_format: { type: "image", mime_type: "image/jpeg", image_size: "0.5K" },
+        // Supported image_size values are "512", "1K", "2K", "4K". Source
+        // frames are extracted at ~640px, so "512" keeps the repair at a
+        // comparable resolution without upscaling / inventing detail.
+        response_format: { type: "image", mime_type: "image/jpeg", image_size: "512" },
       },
     });
     const output = interactionImage(response);

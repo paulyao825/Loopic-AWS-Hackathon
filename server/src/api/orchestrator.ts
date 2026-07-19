@@ -67,12 +67,26 @@ export class RunManager {
     const judge = this.buildJudge(cfg, req.preference, (event) => {
       if (event.type === "judge:fallback") usedLocalFallback = true;
     }, req.feedback);
+    // Direct user feedback must produce a visible edit. minRounds: 2 forces
+    // at least one correction round even when the image already clears the
+    // bar, so the feedback is actually applied instead of the unchanged
+    // image being handed straight back.
     const result = await runLoop(
-      makeEditRefinementLoop(req.frame, editor, judge, { bar: cfg.loop.bar, maxRounds: cfg.loop.maxRounds }),
+      makeEditRefinementLoop(req.frame, editor, judge, { bar: cfg.loop.bar, maxRounds: cfg.loop.maxRounds, minRounds: 2 }),
       initialRefineState(),
     );
 
-    return { url: result.best.uri, score: result.bestScore, usedLocalFallback };
+    // Round 1 renders the identity recipe (unchanged input). Prefer the
+    // best-scoring round that actually applied a correction, so the user
+    // always sees their feedback reflected — not the untouched image when
+    // it happened to score highest.
+    const baseKey = result.rounds[0]?.candidateKey;
+    const changed = result.rounds.filter((round) => round.candidateKey !== baseKey);
+    const picked = (changed.length > 0 ? changed : result.rounds).reduce((best, round) =>
+      round.score > best.score ? round : best,
+    );
+
+    return { url: picked.candidate.uri, score: picked.score, usedLocalFallback };
   }
 
   async repairBlur(frame: Frame): Promise<{ url: string }> {
